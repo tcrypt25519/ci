@@ -6,9 +6,10 @@ inputs:
     description: Commit message to use when committing changes
     required: false
     default: "chore(fmt): From CI 🤖"
-  head-ref:
+  ref:
     description: Branch or ref to push changes to
-    required: true
+    required: false
+    default: ""
   user-name:
     description: Git user name for committing
     required: false
@@ -21,21 +22,30 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Configure Git user
-      shell: bash
+    - name: Get target ref
+      id: get_target
       run: |
-        git config user.name "${{ inputs.user-name }}"
-        git config user.email "${{ inputs.user-email }}"
-
+          if [ -n "${{ inputs.ref }}" ]; then
+            TARGET_REF="${{ inputs.ref }}"
+          else
+            TARGET_REF=$(git rev-parse --abbrev-ref HEAD)
+          fi
+          echo "Found target ref: $TARGET_REF"
+          echo "ref=$TARGET_REF" >> $GITHUB_OUTPUT
+        
     - name: Commit and push changes
       shell: bash
       run: |
         git add -A
         if git diff --cached --quiet; then
-          echo "No changes to commit"
+          echo "No changes to commit ✅"
         else
+          git config user.name "${{ inputs.user-name }}"
+          git config user.email "${{ inputs.user-email }}"
+
+          REF=${{ steps.get_target.outputs.ref }}
           git fetch --all
-          git pull origin ${{ inputs.head-ref }}
+          git pull origin $REF
           git commit -m "${{ inputs.commit-message }}"
-          git push origin HEAD:${{ inputs.head-ref }}
+          git push origin HEAD:$REF
         fi
