@@ -1,4 +1,4 @@
-name: Commit if files changed
+name: Commit changes
 description: Commit and push changes back to the source branch when files have been modified
 
 inputs:
