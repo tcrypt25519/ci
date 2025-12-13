@@ -1,0 +1,41 @@
+name: Commit if files changed
+description: Commit and push changes back to the source branch when files have been modified
+
+inputs:
+  commit-message:
+    description: Commit message to use when committing changes
+    required: false
+    default: "chore(fmt): From CI 🤖"
+  head-ref:
+    description: Branch or ref to push changes to
+    required: true
+  user-name:
+    description: Git user name for committing
+    required: false
+    default: "tcrypt25519"
+  user-email:
+    description: Git user email for committing
+    required: false
+    default: "mail@tcry.pt"
+
+runs:
+  using: composite
+  steps:
+    - name: Configure Git user
+      shell: bash
+      run: |
+        git config user.name "${{ inputs.user-name }}"
+        git config user.email "${{ inputs.user-email }}"
+
+    - name: Commit and push changes
+      shell: bash
+      run: |
+        git add -A
+        if git diff --cached --quiet; then
+          echo "No changes to commit"
+        else
+          git fetch --all
+          git pull origin ${{ inputs.head-ref }}
+          git commit -m "${{ inputs.commit-message }}"
+          git push origin HEAD:${{ inputs.head-ref }}
+        fi
