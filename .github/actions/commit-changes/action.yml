@@ -18,34 +18,53 @@ inputs:
     description: Git user email for committing
     required: false
     default: "mail@tcry.pt"
+  add-flags:
+    description: Flags passed to git add when staging changes
+    required: false
+    default: "-u"
 
 runs:
   using: composite
   steps:
     - name: Get target ref
       id: get_target
+      shell: bash
       run: |
           if [ -n "${{ inputs.ref }}" ]; then
             TARGET_REF="${{ inputs.ref }}"
           else
-            TARGET_REF=$(git rev-parse --abbrev-ref HEAD)
+            TARGET_REF=$(git symbolic-ref --short -q HEAD)
+          fi
+
+          if [ -z "$TARGET_REF" ]; then
+            echo "Target ref is required; set the ref input or checkout a branch" >&2
+            exit 1
           fi
           echo "Found target ref: $TARGET_REF"
           echo "ref=$TARGET_REF" >> $GITHUB_OUTPUT
-        
-    - name: Commit and push changes
+
+    - name: Stage changes
+      id: stage_changes
       shell: bash
       run: |
-        git add -A
+        read -r -a ADD_ARGS <<< "${{ inputs.add-flags }}"
+        git add "${ADD_ARGS[@]}"
+
         if git diff --cached --quiet; then
           echo "No changes to commit ✅"
+          echo "changes_staged=false" >> $GITHUB_OUTPUT
         else
-          git config user.name "${{ inputs.user-name }}"
-          git config user.email "${{ inputs.user-email }}"
-
-          REF=${{ steps.get_target.outputs.ref }}
-          git fetch --all
-          git pull origin $REF
-          git commit -m "${{ inputs.commit-message }}"
-          git push origin HEAD:$REF
+          echo "changes_staged=true" >> $GITHUB_OUTPUT
         fi
+
+    - name: Commit and push changes
+      if: steps.stage_changes.outputs.changes_staged == 'true'
+      shell: bash
+      run: |
+        git config user.name "${{ inputs.user-name }}"
+        git config user.email "${{ inputs.user-email }}"
+
+        REF="${{ steps.get_target.outputs.ref }}"
+        git commit --no-verify -m "${{ inputs.commit-message }}"
+        git pull --rebase origin "$REF"
+        git push origin HEAD:"$REF"
