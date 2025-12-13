@@ -32,10 +32,10 @@ runs:
       run: |
         git add -A
         if git diff --cached --quiet; then
-          echo "No formatting changes"
+          echo "No changes to commit"
         else
           git fetch --all
-          git pull
+          git pull origin ${{ inputs.head-ref }}
           git commit -m "${{ inputs.commit-message }}"
           git push origin HEAD:${{ inputs.head-ref }}
         fi
