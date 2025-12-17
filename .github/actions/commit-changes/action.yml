@@ -5,7 +5,7 @@ inputs:
   commit-message:
     description: Commit message to use when committing changes
     required: false
-    default: "chore(fmt): From CI 🤖"
+    default: "chore: CI change 🤖"
   ref:
     description: Branch or ref to push changes to (defaults to a symbol lookup on HEAD)
     required: false
