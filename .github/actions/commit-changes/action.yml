@@ -7,7 +7,7 @@ inputs:
     required: false
     default: "chore(fmt): From CI 🤖"
   ref:
-    description: Branch or ref to push changes to
+    description: Branch or ref to push changes to (defaults to a symbol lookup on HEAD)
     required: false
     default: ""
   user-name:
