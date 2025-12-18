@@ -31,17 +31,22 @@ runs:
       shell: bash
       run: |
           if [ -n "${{ inputs.ref }}" ]; then
-            TARGET_REF="${{ inputs.ref }}"
-          else
-            TARGET_REF=$(git symbolic-ref --short -q HEAD)
+            TARGET="${{ inputs.ref }}"
+          elif ! TARGET=$(git symbolic-ref --short -q HEAD); then
+            if [ -n "$GITHUB_HEAD_REF" ]; then
+              TARGET="$GITHUB_HEAD_REF"
+            else
+              TARGET="$GITHUB_REF_NAME"
+            fi
           fi
 
-          if [ -z "$TARGET_REF" ]; then
+          if [ -z "$TARGET" ]; then
             echo "Target ref is required; set the ref input or checkout a branch" >&2
             exit 1
           fi
-          echo "Found target ref: $TARGET_REF"
-          echo "ref=$TARGET_REF" >> $GITHUB_OUTPUT
+
+          echo "Found target ref: $TARGET"
+          echo "ref=$TARGET" >> $GITHUB_OUTPUT
 
     - name: Stage changes
       id: stage_changes
