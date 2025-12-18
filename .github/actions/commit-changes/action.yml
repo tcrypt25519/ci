@@ -37,7 +37,7 @@ runs:
           fi
 
           if [ -z "$TARGET" ]; then
-            echo "Target ref is required; set the ref input or checkout a branch" >&2
+            echo "Target ref could not be determined; ensure ref input is set, a branch is checked out, or GitHub ref environment variables are available" >&2
             exit 1
           fi
 
