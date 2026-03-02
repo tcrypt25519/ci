@@ -1,0 +1,77 @@
+name: Check Rust
+description: Run Rust CI checks including formatting, linting, and tests
+
+runs:
+  using: composite
+  steps:
+    # Install nightly with an isolated target
+    - name: Install Rust nightly (for rustfmt)
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: nightly
+        components: rustfmt
+        cache-add-job-id-key: false
+        cache-add-rust-environment-hash-key: false
+        cache-all-crates: true
+        cache-bin: false
+        cache-env-vars: ""
+        cache-shared-key: nightly
+        cache-workspaces: . -> target-nightly
+
+    - name: Format code
+      shell: bash
+      run: make fmt 2>&1 | tee fmt.log
+
+    - name: Commit and push
+      uses: tcrypt25519/ci/.github/actions/commit-changes@main
+  
+    # Install Stable and run the remaining checks
+    - name: Install Rust stable
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: stable
+        components: clippy
+        cache-add-job-id-key: false
+        cache-add-rust-environment-hash-key: false
+        cache-all-crates: true
+        cache-bin: false
+        cache-env-vars: ""
+        cache-shared-key: stable
+        cache-targets: true
+        cache-workspaces: . -> target
+
+    - name: Check clippy
+      shell: bash
+      run: >
+        cargo clippy
+        --profile ci
+        --keep-going
+        --workspace
+        --all-targets
+        -- -D warnings
+        2>&1 | tee clippy.log
+
+    - name: Install Nextest
+      uses: taiki-e/install-action@nextest
+    
+    - name: Check tests
+      shell: bash
+      run: cargo nextest run --locked 2>&1 | tee test.log
+      env:
+          CARGO_TARGET_DIR: target/install
+    
+    - name: Check doc tests
+      shell: bash
+      run: cargo test-docs --profile ci 2>&1 | tee test-docs.log
+
+    - name: Upload logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ci-logs
+        path: |
+          fmt.log
+          clippy.log
+          test.log
+          test-docs.log
+        retention-days: 30 
