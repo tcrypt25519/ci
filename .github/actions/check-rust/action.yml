@@ -1,6 +1,16 @@
 name: Check Rust
 description: Run Rust CI checks including formatting, linting, and tests
 
+inputs:
+  run-coverage:
+    description: Run coverage with cargo-llvm-cov and upload the lcov report
+    required: false
+    default: "false"
+  codecov-token:
+    description: Codecov token used when uploading coverage (required if run-coverage is true)
+    required: false
+    default: ""
+
 runs:
   using: composite
   steps:
@@ -9,7 +19,7 @@ runs:
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         toolchain: nightly
-        components: rustfmt
+        components: rustfmt,llvm-tools-preview
         cache-add-job-id-key: false
         cache-add-rust-environment-hash-key: false
         cache-all-crates: true
@@ -59,10 +69,30 @@ runs:
       run: cargo nextest run --locked 2>&1 | tee test.log
       env:
           CARGO_TARGET_DIR: target/install
-    
+
     - name: Check doc tests
       shell: bash
       run: cargo test-docs --profile ci 2>&1 | tee test-docs.log
+
+    - name: Install cargo-llvm-cov
+      if: inputs.run-coverage == 'true'
+      uses: taiki-e/install-action@cargo-llvm-cov
+
+    - name: Generate coverage report
+      if: inputs.run-coverage == 'true'
+      shell: bash
+      run: cargo +nightly llvm-cov --locked --lcov --output-path lcov.info
+      env:
+        CARGO_TARGET_DIR: target-nightly
+
+    - name: Upload to Codecov
+      if: inputs.run-coverage == 'true'
+      uses: codecov/codecov-action@v4
+      with:
+        files: lcov.info
+        fail_ci_if_error: true
+      env:
+        CODECOV_TOKEN: ${{ inputs.codecov-token }}
 
     - name: Upload logs
       if: always()
