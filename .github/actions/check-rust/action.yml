@@ -37,7 +37,7 @@ runs:
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         toolchain: stable
-        components: clippy
+        components: clippy,llvm-tools-preview
         cache-all-crates: true
         cache-bin: false
         cache-shared-key: stable
@@ -61,8 +61,6 @@ runs:
     - name: Check tests
       shell: bash
       run: cargo nextest run --locked --cargo-profile ci 2>&1 | tee test.log
-      env:
-          CARGO_TARGET_DIR: target/install
 
     - name: Check doc tests
       shell: bash
@@ -75,9 +73,7 @@ runs:
     - name: Generate coverage report
       if: inputs.run-coverage == 'true'
       shell: bash
-      run: cargo +nightly llvm-cov --locked --lcov --output-path lcov.info
-      env:
-        CARGO_TARGET_DIR: target-nightly
+      run: cargo llvm-cov --locked --profile ci --lcov --output-path lcov.info
 
     - name: Upload to Codecov
       if: inputs.run-coverage == 'true'
