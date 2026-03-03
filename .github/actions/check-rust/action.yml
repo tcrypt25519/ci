@@ -30,7 +30,7 @@ runs:
 
     - name: Format code
       shell: bash
-      run: make fmt 2>&1 | tee fmt.log
+      run: cargo fmt 2>&1 | tee fmt.log
 
     - name: Commit and push
       uses: tcrypt25519/ci/.github/actions/commit-changes@main
