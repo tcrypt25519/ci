@@ -66,13 +66,13 @@ runs:
     
     - name: Check tests
       shell: bash
-      run: cargo nextest run --locked 2>&1 | tee test.log
+      run: cargo nextest run --locked --cargo-profile ci 2>&1 | tee test.log
       env:
           CARGO_TARGET_DIR: target/install
 
     - name: Check doc tests
       shell: bash
-      run: cargo test-docs --profile ci 2>&1 | tee test-docs.log
+      run: cargo test --doc --locked --profile ci 2>&1 | tee test-docs.log
 
     - name: Install cargo-llvm-cov
       if: inputs.run-coverage == 'true'
