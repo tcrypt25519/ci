@@ -20,11 +20,8 @@ runs:
       with:
         toolchain: nightly
         components: rustfmt,llvm-tools-preview
-        cache-add-job-id-key: false
-        cache-add-rust-environment-hash-key: false
         cache-all-crates: true
         cache-bin: false
-        cache-env-vars: ""
         cache-shared-key: nightly
         cache-workspaces: . -> target-nightly
 
@@ -41,11 +38,8 @@ runs:
       with:
         toolchain: stable
         components: clippy
-        cache-add-job-id-key: false
-        cache-add-rust-environment-hash-key: false
         cache-all-crates: true
         cache-bin: false
-        cache-env-vars: ""
         cache-shared-key: stable
         cache-targets: true
         cache-workspaces: . -> target
